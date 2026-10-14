@@ -62,5 +62,22 @@ explicit = true
 [tool.pyrefly]
 project-excludes = ["src/notebooks/*"]
 
+[tool.pylint.main]
+ignore = [".venv"]
+
+[tool.pylint.messages_control]
+disable = [
+    "missing-module-docstring",
+    "missing-class-docstring",
+    "missing-function-docstring",
+    "too-few-public-methods",
+    "too-many-arguments",
+    "too-many-locals",
+    "too-many-instance-attributes",
+    "too-many-positional-arguments",
+    "invalid-name",
+    "import-error"
+]
+
 [tool.pyrefly.errors]
 not-callable = false

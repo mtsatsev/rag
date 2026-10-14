@@ -6,11 +6,9 @@ DATA_DIR = Path(
     os.environ.get("RAG_DATA_DIR", Path(__file__).parents[1] / "src" / "data")
 )
 
-RIGHTS_PDF = "11074.pdf"  # 1 page, Bulgarian, plain text only
-KID_PDF = "KID_BE6316179249_BG.pdf"  # 4 pages, Bulgarian, headings and tables
-PROSPECTUS_PDF = (
-    "FU_BF065_EN.pdf"  # 556 pages, English; only parse selected pages in tests
-)
+RIGHTS_PDF = "11074.pdf"
+KID_PDF = "KID_BE6316179249_BG.pdf"
+PROSPECTUS_PDF = "FU_BF065_EN.pdf"
 
 
 def require_pdf(name: str) -> Path:
