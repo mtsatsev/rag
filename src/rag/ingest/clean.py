@@ -25,3 +25,7 @@ def clean_markdown(text: str) -> str:
     text = TRAILING_SPACES.sub("", text)
     text = BLANK_LINES.sub("\n\n", text)
     return text.strip()
+
+
+def match_key(text: str) -> str:
+    raise NotImplementedError

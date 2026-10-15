@@ -1,6 +1,6 @@
 import unittest
 
-from rag.ingest.clean import clean_markdown
+from rag.ingest.clean import clean_markdown, match_key
 
 
 class TestCleanMarkdownEmphasis(unittest.TestCase):
@@ -191,4 +191,41 @@ class TestCleanMarkdownWhitespace(unittest.TestCase):
         self.assertEqual(
             clean_markdown("Година на стартиране: 2022\nВалута: евро"),
             "Година на стартиране: 2022\nВалута: евро",
+        )
+
+
+class TestMatchKey(unittest.TestCase):
+    def test_match_key_when_fund_names_differ_only_in_casing_then_keys_are_equal(self):
+        self.assertEqual(match_key("ОББ ЕкспертИйз"), match_key("ОББ Експертийз"))
+
+    def test_match_key_when_text_is_all_uppercase_then_key_equals_lowercase_variant(
+        self,
+    ):
+        self.assertEqual(match_key("OPTIMUM FUND"), match_key("optimum fund"))
+
+    def test_match_key_when_cyrillic_word_contains_latin_lookalike_then_key_equals_pure_cyrillic_variant(
+        self,
+    ):
+        self.assertEqual(match_key("Дефанзивeн"), match_key("Дефанзивен"))  # Latin e
+
+    def test_match_key_when_fund_name_is_wrapped_in_quotes_then_key_equals_unquoted_variant(
+        self,
+    ):
+        self.assertEqual(
+            match_key("„ОББ ЕкспертИйз Дефанзивен Балансиран Отговорно Инвестиращ“"),
+            match_key("ОББ ЕкспертИйз Дефанзивен Балансиран Отговорно Инвестиращ"),
+        )
+
+    def test_match_key_when_name_has_line_breaks_or_repeated_spaces_then_key_equals_single_spaced_variant(
+        self,
+    ):
+        self.assertEqual(
+            match_key("Enhanced Intelligence Global Allocation Responsible\nInvesting"),
+            match_key("Enhanced  Intelligence Global Allocation Responsible Investing"),
+        )
+
+    def test_match_key_when_fund_names_differ_by_one_word_then_keys_are_different(self):
+        self.assertNotEqual(
+            match_key("ОББ ЕкспертИйз Дефанзивен Консервативен Отговорно Инвестиращ"),
+            match_key("ОББ ЕкспертИйз Дефанзивен Балансиран Отговорно Инвестиращ"),
         )
