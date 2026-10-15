@@ -9,6 +9,7 @@ CYRILLIC_WORD = re.compile(r"\w*[\u0400-\u04FF]\w*")
 SPACES = re.compile(r"[ \u00a0]+")
 TRAILING_SPACES = re.compile(r" +$", re.MULTILINE)
 BLANK_LINES = re.compile(r"\n{3,}")
+PUNCTUATION = re.compile(r"[^\w\s]")
 LATIN_TO_CYRILLIC = str.maketrans("ABCEHKMOPTXaceopxy", "АВСЕНКМОРТХасеорху")
 
 
@@ -28,4 +29,5 @@ def clean_markdown(text: str) -> str:
 
 
 def match_key(text: str) -> str:
-    raise NotImplementedError
+    text = PUNCTUATION.sub(" ", clean_markdown(text))
+    return " ".join(text.casefold().split())
