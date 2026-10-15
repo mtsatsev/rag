@@ -14,7 +14,7 @@ from rag.models import (
 )
 from rag.retrieve.filters import to_where
 from rag.retrieve.hybrid import HybridRetriever, build_retriever
-from tests.fakes import FakeEmbedder
+from tests.fakes import FakeDense, FakeEmbedder, FakeKeyword, FakeResolver
 
 ENHANCED = FundRef(
     fund="Enhanced Intelligence Global Allocation Responsible Investing",
@@ -47,32 +47,6 @@ def make_chunk(
 
 
 A, B, C, D = (make_chunk(name) for name in "ABCD")
-
-
-class FakeDense:
-    def __init__(self, ranked: list[Chunk]) -> None:
-        self.ranked, self.calls = ranked, []
-
-    def query(self, text, k=5, where=None):
-        self.calls.append({"text": text, "k": k, "where": where})
-        return [(chunk, 1.0 - rank / 100) for rank, chunk in enumerate(self.ranked[:k])]
-
-
-class FakeKeyword:
-    def __init__(self, ranked: list[Chunk]) -> None:
-        self.ranked, self.calls = ranked, []
-
-    def search(self, question, k=20, fund_query=None):
-        self.calls.append({"question": question, "k": k, "fund_query": fund_query})
-        return [(chunk, 10.0 - rank) for rank, chunk in enumerate(self.ranked[:k])]
-
-
-class FakeResolver:
-    def __init__(self, fund_query: FundQuery = FundQuery()) -> None:
-        self.fund_query = fund_query
-
-    def resolve(self, question):
-        return self.fund_query
 
 
 def retrieve(
