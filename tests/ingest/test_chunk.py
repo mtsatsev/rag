@@ -26,6 +26,16 @@ def section_of(chunks, text: str) -> str:
     return next(chunk.metadata.section for chunk in chunks if text in chunk.text)
 
 
+SCENARIO_TABLE = [
+    "|Сценарий|1 година|5 години|",
+    "|---|---|---|",
+    "|Кризисен|6 060 EUR|5 690 EUR|",
+    "|Песимистичен|8 410 EUR|10 000 EUR|",
+    "|Умерен|10 350 EUR|12 270 EUR|",
+    "|Благоприятен|14 280 EUR|15 010 EUR|",
+]
+
+
 class TestChunkDocumentPages(unittest.TestCase):
     def test_chunk_document_when_all_paragraphs_are_on_one_page_then_page_start_equals_page_end(
         self,
@@ -272,3 +282,73 @@ class TestChunkDocumentBoundaries(unittest.TestCase):
         self.assertEqual(len(chunks), 3)
         self.assertEqual([chunk.metadata.section for chunk in chunks], ["Разходи"] * 3)
         self.assertTrue(chunks[0].text.startswith("## Разходи"))
+
+
+class TestChunkDocumentSize(unittest.TestCase):
+    def test_chunk_document_when_all_paragraphs_are_shorter_than_max_chars_then_no_chunk_exceeds_max_chars(
+        self,
+    ):
+        doc = make_document(
+            (
+                1,
+                "\n\n".join(
+                    letter * length
+                    for letter, length in zip("АБВГДЕ", [10, 35, 20, 45, 5, 30])
+                ),
+            )
+        )
+
+        chunks = chunk_document(doc, INFO, max_chars=50)
+
+        for chunk in chunks:
+            with self.subTest(chunk=chunk.metadata.chunk_index):
+                self.assertLessEqual(len(chunk.text), 50)
+
+    def test_chunk_document_when_paragraph_is_longer_than_max_chars_then_it_is_split_at_line_boundaries(
+        self,
+    ):
+        doc = make_document((1, "\n".join(["А" * 30, "Б" * 30, "В" * 30])))
+
+        chunks = chunk_document(doc, INFO, max_chars=70)
+
+        self.assertEqual(
+            [chunk.text for chunk in chunks], ["А" * 30 + "\n" + "Б" * 30, "В" * 30]
+        )
+
+    def test_chunk_document_when_table_is_longer_than_max_chars_then_every_row_stays_intact_in_exactly_one_chunk(
+        self,
+    ):
+        doc = make_document((1, "\n".join(SCENARIO_TABLE)))
+
+        chunks = chunk_document(doc, INFO, max_chars=80)
+
+        self.assertGreater(len(chunks), 1)
+        for row in SCENARIO_TABLE:
+            with self.subTest(row=row):
+                self.assertEqual(
+                    sum(row in chunk.text.split("\n") for chunk in chunks), 1
+                )
+
+    def test_chunk_document_when_single_line_is_longer_than_max_chars_then_it_is_kept_whole(
+        self,
+    ):
+        chunks = chunk_document(make_document((1, "А" * 100)), INFO, max_chars=50)
+
+        self.assertEqual([chunk.text for chunk in chunks], ["А" * 100])
+
+    def test_chunk_document_when_oversized_table_is_split_then_every_piece_keeps_the_section_and_page(
+        self,
+    ):
+        doc = make_document(
+            (3, "## Сценарии за резултатите\n\n" + "\n".join(SCENARIO_TABLE))
+        )
+
+        chunks = chunk_document(doc, INFO, max_chars=80)
+
+        self.assertGreater(len(chunks), 1)
+        for chunk in chunks:
+            with self.subTest(chunk=chunk.metadata.chunk_index):
+                self.assertEqual(chunk.metadata.section, "Сценарии за резултатите")
+                self.assertEqual(
+                    (chunk.metadata.page_start, chunk.metadata.page_end), (3, 3)
+                )
