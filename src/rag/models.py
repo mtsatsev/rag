@@ -2,6 +2,9 @@ from typing import Literal, NamedTuple, Self
 
 from pydantic import BaseModel, ConfigDict, Field, computed_field, model_validator
 
+DocType = Literal["prospectus", "kid", "sfdr", "factsheet", "investor_rights"]
+Status = Literal["answered", "not_found", "ambiguous"]
+
 
 class ParsedPage(BaseModel):
     page_number: int = Field(
@@ -21,9 +24,6 @@ class ParsedDocument(BaseModel):
     model_config = ConfigDict(
         frozen=True, validate_assignment=True, arbitrary_types_allowed=True
     )
-
-
-DocType = Literal["prospectus", "kid", "sfdr", "factsheet", "investor_rights"]
 
 
 class DocumentInfo(BaseModel):
@@ -194,12 +194,12 @@ class RetrievalResult(BaseModel):
 
 
 class Citation(BaseModel):
-    chunk_id: str
-    quote: str
+    source: str = Field(description="Source label from the prompt, e.g. 'S2'")
+    quote: str = Field(description="Short verbatim quote from that source")
 
 
 class LLMAnswer(BaseModel):
-    status: Literal["answered", "not_found", "ambiguous"]
+    status: Status
     answer: str
     citations: list[Citation]
     conflicts: list[str] = []
@@ -215,7 +215,7 @@ class Source(BaseModel):
 
 class Answer(BaseModel):
     answer: str
-    status: Literal["answered", "not_found", "ambiguous"]
+    status: Status
     funds: list[str]
     sources: list[Source]
     conflicts: list[str] = []

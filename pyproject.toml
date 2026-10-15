@@ -17,6 +17,7 @@ dependencies = [
     "pyyaml>=6.0.3",
     "umap-learn>=0.5.12",
     "polars>=2.0.0",
+    "ollama>=0.6.3",
 ]
 
 [dependency-groups]

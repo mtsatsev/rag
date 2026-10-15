@@ -64,7 +64,6 @@ def describe_fund_query(fund_query: FundQuery | None) -> str:
     return "The question is about: " + "; ".join(named) + "."
 
 
-
 def build_user_prompt(
     question: str, chunks: list[Chunk], fund_query: FundQuery | None = None
 ) -> str:
