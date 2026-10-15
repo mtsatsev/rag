@@ -150,3 +150,21 @@ class IngestReport(BaseModel):
         default=[], description="doc_ids unchanged since last run"
     )
     removed: list[str] = Field(default=[], description="doc_ids whose PDF disappeared")
+
+
+class FundRef(BaseModel):
+    fund: str = Field(description="Canonical sub-fund name")
+    umbrella: str | None = Field(description="Canonical umbrella name of the sub-fund")
+
+    model_config = ConfigDict(frozen=True, validate_assignment=True)
+
+
+class FundQuery(BaseModel):
+    funds: list[FundRef] = Field(
+        default=[], description="Sub-funds named in the question"
+    )
+    umbrellas: list[str] = Field(
+        default=[], description="Umbrellas named on their own, without a sub-fund"
+    )
+
+    model_config = ConfigDict(frozen=True, validate_assignment=True)
