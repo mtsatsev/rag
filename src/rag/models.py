@@ -191,3 +191,31 @@ class RetrievalResult(BaseModel):
     chunks: list[RetrievedChunk] = Field(description="Best chunks, best first")
 
     model_config = ConfigDict(frozen=True, validate_assignment=True)
+
+
+class Citation(BaseModel):
+    chunk_id: str
+    quote: str
+
+
+class LLMAnswer(BaseModel):
+    status: Literal["answered", "not_found", "ambiguous"]
+    answer: str
+    citations: list[Citation]
+    conflicts: list[str] = []
+
+
+class Source(BaseModel):
+    document: str
+    page_start: int
+    page_end: int
+    section: str
+    fund: str | None
+
+
+class Answer(BaseModel):
+    answer: str
+    status: Literal["answered", "not_found", "ambiguous"]
+    funds: list[str]
+    sources: list[Source]
+    conflicts: list[str] = []
