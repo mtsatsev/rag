@@ -554,3 +554,60 @@ class TestChunkDocumentIdentity(unittest.TestCase):
                 self.assertEqual(
                     (chunk.metadata.fund, chunk.metadata.umbrella_fund), (None, None)
                 )
+
+
+class TestChunkDocumentText(unittest.TestCase):
+    def test_chunk_document_when_page_has_markdown_emphasis_then_chunk_text_is_cleaned(
+        self,
+    ):
+        chunks = chunk_document(
+            make_document((1, "**Умерен** сценарий и <u>важна</u> _бележка_.")), INFO
+        )
+
+        self.assertEqual(chunks[0].text, "Умерен сценарий и важна бележка.")
+
+    def test_chunk_document_when_page_has_picture_markers_and_br_tags_then_chunk_text_has_neither(
+        self,
+    ):
+        page = "<!-- Start of picture text -->ISIN код: BG9000005223<br>Подфонд на договорен фонд<!-- End of picture text -->"
+
+        chunks = chunk_document(make_document((1, page)), INFO)
+
+        self.assertEqual(
+            chunks[0].text, "ISIN код: BG9000005223 Подфонд на договорен фонд"
+        )
+
+    def test_chunk_document_when_page_has_latin_lookalikes_then_chunk_text_is_pure_cyrillic(
+        self,
+    ):
+        chunks = chunk_document(make_document((1, "Валута: eвро")), INFO)  # Latin e
+
+        self.assertEqual(chunks[0].text, "Валута: евро")
+
+    def test_chunk_document_when_chunk_has_fund_and_section_then_embed_text_starts_with_both(
+        self,
+    ):
+        chunks = chunk_document(
+            make_document((1, "## Разходи\n\nТекст за разходите.")), INFO
+        )
+
+        self.assertEqual(
+            chunks[0].embed_text,
+            "Test Fund | Разходи\n\n## Разходи\n\nТекст за разходите.",
+        )
+
+    def test_chunk_document_when_chunk_has_fund_but_no_section_then_embed_text_starts_with_fund_only(
+        self,
+    ):
+        chunks = chunk_document(make_document((1, "Текст без заглавие.")), INFO)
+
+        self.assertEqual(chunks[0].embed_text, "Test Fund\n\nТекст без заглавие.")
+
+    def test_chunk_document_when_chunk_has_neither_fund_nor_section_then_embed_text_equals_text(
+        self,
+    ):
+        info = DocumentInfo(doc_type="investor_rights", fund=None, umbrella_fund=None)
+
+        chunks = chunk_document(make_document((1, "Текст без заглавие.")), info)
+
+        self.assertEqual(chunks[0].embed_text, chunks[0].text)
