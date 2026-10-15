@@ -20,15 +20,26 @@ dependencies = [
     "ollama>=0.6.3",
 ]
 
+[project.scripts]
+rag = "rag.__main__:main"
+
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[tool.hatch.build.targets.wheel]
+packages = ["src/rag"]
+
 [dependency-groups]
 dev = [
     "ruff",
     "pytest",
-    "pyrefly"
+    "pyrefly",
+    "ipykernel>=7.4.0",
 ]
 
 [tool.uv]
-package = false
+package = true
 
 [tool.pytest.ini_options]
 pythonpath = ["src", "."]
