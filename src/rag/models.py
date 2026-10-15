@@ -52,7 +52,7 @@ class ChunkMetadata(BaseModel):
 
     @model_validator(mode="after")
     def validate_page_range(self) -> Self:
-        if self.page_start < self.page_end:
+        if self.page_end < self.page_start:
             raise ValueError(
                 f"page_start ({self.page_start}) cannot be greater than page_end ({self.page_end})"
             )
