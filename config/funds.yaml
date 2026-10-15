@@ -1,0 +1,39 @@
+umbrellas:
+  - name: Optimum Fund
+    aliases: [Optimum Fund]
+  - name: ОББ ЕкспертИйз
+    aliases: [ОББ ЕкспертИйз, UBB Expertiz]
+
+funds:
+  - name: Enhanced Intelligence Global Allocation Responsible Investing
+    umbrella: Optimum Fund
+    isin: BE6316179249
+    aliases: [Optimum Fund Enhanced Intelligence Global Allocation Responsible Investing]
+  - name: ОББ ЕкспертИйз Дефанзивен Консервативен Отговорно Инвестиращ
+    umbrella: ОББ ЕкспертИйз
+    isin: null
+    aliases: []
+  - name: ОББ ЕкспертИйз Дефанзивен Балансиран Отговорно Инвестиращ
+    umbrella: ОББ ЕкспертИйз
+    isin: BG9000005223
+    aliases: []
+
+documents:
+  FU_BF065_EN.pdf:
+    doc_type: prospectus
+    umbrella: Optimum Fund
+    multi_fund: true
+  KID_BE6316179249_BG.pdf:
+    doc_type: kid
+    fund: Enhanced Intelligence Global Allocation Responsible Investing
+  17126.pdf:
+    doc_type: sfdr
+    fund: Enhanced Intelligence Global Allocation Responsible Investing
+  18325.pdf:
+    doc_type: sfdr
+    fund: ОББ ЕкспертИйз Дефанзивен Консервативен Отговорно Инвестиращ
+  18368.pdf:
+    doc_type: factsheet
+    fund: ОББ ЕкспертИйз Дефанзивен Балансиран Отговорно Инвестиращ
+  11074.pdf:
+    doc_type: investor_rights

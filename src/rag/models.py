@@ -34,6 +34,46 @@ class DocumentInfo(BaseModel):
     model_config = ConfigDict(frozen=True, validate_assignment=True)
 
 
+class Umbrella(BaseModel):
+    name: str = Field(description="Canonical umbrella name, stored on chunks")
+    aliases: list[str] = Field(default=[], description="Other ways users write it")
+
+    model_config = ConfigDict(frozen=True, validate_assignment=True)
+
+
+class Fund(BaseModel):
+    name: str = Field(description="Canonical sub-fund name, stored on chunks")
+    umbrella: str = Field(description="Canonical name of the umbrella it belongs to")
+    isin: str | None = Field(default=None, description="ISIN code, if known")
+    aliases: list[str] = Field(default=[], description="Other ways users write it")
+
+    model_config = ConfigDict(frozen=True, validate_assignment=True)
+
+
+class DocumentEntry(BaseModel):
+    doc_type: DocType = Field(description="Document type")
+    fund: str | None = Field(
+        default=None, description="Canonical fund name; None if not fund-specific"
+    )
+    umbrella: str | None = Field(
+        default=None,
+        description="Umbrella for umbrella-level documents; derived from fund otherwise",
+    )
+    multi_fund: bool = Field(
+        default=False, description="True if the fund changes inside the document"
+    )
+
+    model_config = ConfigDict(frozen=True, validate_assignment=True)
+
+
+class FundRegistry(BaseModel):
+    umbrellas: list[Umbrella] = Field(description="Known umbrella funds")
+    funds: list[Fund] = Field(description="Known sub-funds")
+    documents: dict[str, DocumentEntry] = Field(description="File name -> entry")
+
+    model_config = ConfigDict(frozen=True, validate_assignment=True)
+
+
 class ChunkMetadata(BaseModel):
     doc_id: str = Field(description="File stem, e.g. '11074'")
     file_name: str = Field(description="Original file name")
