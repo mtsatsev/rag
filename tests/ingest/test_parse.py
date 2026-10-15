@@ -1,6 +1,6 @@
 import unittest
 
-from rag.ingest.parse import parse_pdf
+from rag.ingest.parse import file_hash, parse_pdf
 from tests.documents import KID_PDF, PROSPECTUS_PDF, RIGHTS_PDF, require_pdf
 
 
@@ -136,3 +136,20 @@ class TestParsePdfPageFurniture(unittest.TestCase):
 
     def test_parse_pdf_when_header_and_footer_are_dropped_then_body_text_is_kept(self):
         self.assertIn("The issued capital amounts to 35.754.192 euros", self.page)
+
+
+class TestFileHash(unittest.TestCase):
+    def test_file_hash_when_same_file_is_hashed_twice_then_hashes_are_equal(self):
+        path = require_pdf(RIGHTS_PDF)
+
+        self.assertEqual(file_hash(path), file_hash(path))
+
+    def test_file_hash_when_files_differ_then_hashes_differ(self):
+        self.assertNotEqual(
+            file_hash(require_pdf(RIGHTS_PDF)), file_hash(require_pdf(KID_PDF))
+        )
+
+    def test_file_hash_when_file_is_parsed_then_it_equals_the_parsed_content_hash(self):
+        path = require_pdf(RIGHTS_PDF)
+
+        self.assertEqual(file_hash(path), parse_pdf(path).content_hash)

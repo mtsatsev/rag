@@ -6,6 +6,10 @@ import pymupdf4llm
 from rag.models import ParsedDocument, ParsedPage
 
 
+def file_hash(path: Path) -> str:
+    raise NotImplementedError
+
+
 def parse_pdf(pdf_path: Path, pages: list[int] | None = None) -> ParsedDocument:
     if not pdf_path.exists():
         raise FileNotFoundError(pdf_path)

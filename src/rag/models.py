@@ -142,3 +142,11 @@ class Paragraph(NamedTuple):
     section: tuple[str, ...]
     text: str
     fund: str | None = None
+
+
+class IngestReport(BaseModel):
+    indexed: list[str] = Field(default=[], description="doc_ids parsed and (re)indexed")
+    skipped: list[str] = Field(
+        default=[], description="doc_ids unchanged since last run"
+    )
+    removed: list[str] = Field(default=[], description="doc_ids whose PDF disappeared")

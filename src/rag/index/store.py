@@ -39,6 +39,10 @@ class ChunkStore:
     def count(self) -> int:
         return self.collection.count()
 
+    @property
+    def document_ids(self) -> set[str]:
+        raise NotImplementedError
+
     def has_document(self, doc_id: str, content_hash: str) -> bool:
         where = {"$and": [{"doc_id": doc_id}, {"content_hash": content_hash}]}
         return bool(self.collection.get(where=where, limit=1)["ids"])

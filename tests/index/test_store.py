@@ -2,31 +2,9 @@ import tempfile
 import unittest
 from pathlib import Path
 
-import numpy as np
-
 from rag.index.store import ChunkStore
 from rag.models import Chunk, ChunkMetadata
-
-
-class FakeEmbedder:
-    """Deterministic character-histogram vectors; records every text it embeds."""
-
-    def __init__(self) -> None:
-        self.embedded: list[str] = []
-
-    def embed_documents(self, texts: list[str]) -> np.ndarray:
-        self.embedded.extend(texts)
-        return np.stack([self._vector(text) for text in texts])
-
-    def embed_query(self, text: str) -> np.ndarray:
-        return self._vector(text)
-
-    @staticmethod
-    def _vector(text: str) -> np.ndarray:
-        vector = np.zeros(32)
-        for character in text:
-            vector[ord(character) % 32] += 1
-        return vector / np.linalg.norm(vector)
+from tests.fakes import FakeEmbedder
 
 
 def make_chunk(
@@ -195,3 +173,16 @@ class TestChunkStoreQuery(StoreTestCase):
         )
 
         self.assertEqual({chunk.metadata.fund for chunk, _ in results}, {"Алфа"})
+
+
+class TestChunkStoreDocumentIds(StoreTestCase):
+    def test_document_ids_when_store_is_empty_then_returns_an_empty_set(self):
+        self.assertEqual(self.store.document_ids, set())
+
+    def test_document_ids_when_documents_are_indexed_then_returns_each_doc_id_once(
+        self,
+    ):
+        self.store.replace_document(KID_CHUNKS)
+        self.store.replace_document(RIGHTS_CHUNKS)
+
+        self.assertEqual(self.store.document_ids, {"kid", "rights"})
