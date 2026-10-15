@@ -21,8 +21,40 @@ class HybridRetriever:
         self.rrf_k = rrf_k
 
     def retrieve(self, question: str, k: int = 6) -> RetrievalResult:
-        raise NotImplementedError("This function is not implemented yet.")
+        fund_query = self.resolver.resolve(question)
+        dense = self.store.query(
+            question, k=self.candidates, where=to_where(fund_query)
+        )
+        keyword = self.keyword_index.search(
+            question, k=self.candidates, fund_query=fund_query
+        )
+
+        chunks: dict[str, Chunk] = {}
+        ranks: dict[str, dict[str, int]] = {}
+        for search, results in (("dense", dense), ("keyword", keyword)):
+            for rank, (chunk, _) in enumerate(results, start=1):
+                chunks[chunk.chunk_id] = chunk
+                ranks.setdefault(chunk.chunk_id, {})[search] = rank
+
+        fused = [
+            RetrievedChunk(
+                chunk=chunks[chunk_id],
+                score=sum(1 / (self.rrf_k + rank) for rank in chunk_ranks.values()),
+                dense_rank=chunk_ranks.get("dense"),
+                keyword_rank=chunk_ranks.get("keyword"),
+            )
+            for chunk_id, chunk_ranks in ranks.items()
+        ]
+        fused.sort(key=lambda retrieved: retrieved.score, reverse=True)
+        return RetrievalResult(
+            question=question, fund_query=fund_query, chunks=fused[:k]
+        )
 
 
 def build_retriever(store: ChunkStore, registry: FundRegistry) -> HybridRetriever:
-    raise NotImplementedError("This function is not implemented yet.")
+    """Keyword index and fund resolver built from what is currently in the store."""
+    return HybridRetriever(
+        store,
+        KeywordIndex(store.all_chunks()),
+        FundResolver(registry, store.known_funds),
+    )
