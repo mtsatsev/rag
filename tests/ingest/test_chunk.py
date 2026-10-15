@@ -18,6 +18,14 @@ def make_document(*pages: tuple[int, str]) -> ParsedDocument:
     )
 
 
+def is_heading(paragraph: str) -> bool:
+    return paragraph.startswith("#")
+
+
+def section_of(chunks, text: str) -> str:
+    return next(chunk.metadata.section for chunk in chunks if text in chunk.text)
+
+
 class TestChunkDocumentPages(unittest.TestCase):
     def test_chunk_document_when_all_paragraphs_are_on_one_page_then_page_start_equals_page_end(
         self,
@@ -92,10 +100,6 @@ class TestChunkDocumentPages(unittest.TestCase):
         chunks = chunk_document(doc, INFO, max_chars=50)
 
         self.assertEqual([chunk.metadata.chunk_index for chunk in chunks], [0, 1, 2])
-
-
-def section_of(chunks, text: str) -> str:
-    return next(chunk.metadata.section for chunk in chunks if text in chunk.text)
 
 
 class TestChunkDocumentSections(unittest.TestCase):
@@ -185,3 +189,86 @@ class TestChunkDocumentSections(unittest.TestCase):
 
         self.assertEqual(len(chunks), 1)
         self.assertEqual(chunks[0].metadata.section, "А")
+
+
+class TestChunkDocumentBoundaries(unittest.TestCase):
+    def test_chunk_document_when_top_level_heading_follows_text_then_it_starts_a_new_chunk(
+        self,
+    ):
+        chunks = chunk_document(
+            make_document((1, "Текст преди.\n\n# Разходи\n\nТекст за разходите.")), INFO
+        )
+
+        self.assertEqual(
+            [chunk.text for chunk in chunks],
+            ["Текст преди.", "# Разходи\n\nТекст за разходите."],
+        )
+
+    def test_chunk_document_when_second_level_heading_follows_text_then_it_starts_a_new_chunk(
+        self,
+    ):
+        chunks = chunk_document(
+            make_document(
+                (1, "# Резюме\n\nТекст на резюмето.\n\n## Цел\n\nТекст на целта.")
+            ),
+            INFO,
+        )
+
+        self.assertEqual(
+            [chunk.text for chunk in chunks],
+            ["# Резюме\n\nТекст на резюмето.", "## Цел\n\nТекст на целта."],
+        )
+
+    def test_chunk_document_when_small_third_level_sections_follow_each_other_then_they_are_packed_into_one_chunk(
+        self,
+    ):
+        text = "## Основни данни\n\n#### Име\n\nOptimum Fund\n\n#### Дата на учредяване\n\n29 June 2006"
+
+        chunks = chunk_document(make_document((1, text)), INFO)
+
+        self.assertEqual([chunk.text for chunk in chunks], [text])
+
+    def test_chunk_document_when_headings_follow_each_other_then_they_stay_together_with_their_content(
+        self,
+    ):
+        text = "# Information concerning the sub-fund X\n\n## 1. Basic details\n\nТекст на раздела."
+
+        chunks = chunk_document(make_document((1, text)), INFO)
+
+        self.assertEqual([chunk.text for chunk in chunks], [text])
+
+    def test_chunk_document_when_heading_fits_but_its_content_does_not_then_heading_moves_to_the_next_chunk(
+        self,
+    ):
+        doc = make_document((1, "Текст на първия абзац.\n\n### Б\n\nТекст под Б."))
+
+        chunks = chunk_document(doc, INFO, max_chars=30)
+
+        self.assertEqual(
+            [chunk.text for chunk in chunks],
+            ["Текст на първия абзац.", "### Б\n\nТекст под Б."],
+        )
+
+    def test_chunk_document_when_chunks_are_packed_then_no_chunk_ends_with_a_heading(
+        self,
+    ):
+        text = "\n\n".join(f"### Заглавие {i}\n\n{'Текст ' * 4}" for i in range(6))
+
+        chunks = chunk_document(make_document((1, text)), INFO, max_chars=60)
+
+        for chunk in chunks:
+            with self.subTest(chunk=chunk.metadata.chunk_index):
+                self.assertFalse(is_heading(chunk.text.split("\n\n")[-1]))
+
+    def test_chunk_document_when_section_is_longer_than_max_chars_then_it_is_split_into_chunks_with_the_same_section(
+        self,
+    ):
+        doc = make_document(
+            (1, "## Разходи\n\n" + "\n\n".join(letter * 40 for letter in "АБВ"))
+        )
+
+        chunks = chunk_document(doc, INFO, max_chars=60)
+
+        self.assertEqual(len(chunks), 3)
+        self.assertEqual([chunk.metadata.section for chunk in chunks], ["Разходи"] * 3)
+        self.assertTrue(chunks[0].text.startswith("## Разходи"))
