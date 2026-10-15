@@ -10,6 +10,8 @@ PARAGRAPH_SEPARATOR = "\n\n"
 HEADING = re.compile(r"^(#{1,6}) (.+)$")
 TOP_LEVEL_HEADING = re.compile(r"^#{1,2} ")
 SECTION_SEPARATOR = " > "
+LINE_SEPARATOR = "\n"
+TABLE_SEPARATOR_ROW = re.compile(r"^\|(\s*:?-+:?\s*\|)+$")
 
 Paragraph = tuple[int, tuple[str, ...], str]
 
@@ -17,12 +19,16 @@ Paragraph = tuple[int, tuple[str, ...], str]
 def chunk_document(
     doc: ParsedDocument, info: DocumentInfo, max_chars: int = 1500
 ) -> list[Chunk]:
-    paragraphs: list[Paragraph] = with_sections(
-        (page.page_number, paragraph)
-        for page in doc.pages
-        for paragraph in clean_markdown(page.markdown).split(PARAGRAPH_SEPARATOR)
-        if paragraph
-    )
+    paragraphs: list[Paragraph] = [
+        (page_number, section, piece)
+        for page_number, section, text in with_sections(
+            (page.page_number, paragraph)
+            for page in doc.pages
+            for paragraph in clean_markdown(page.markdown).split(PARAGRAPH_SEPARATOR)
+            if paragraph
+        )
+        for piece in split_oversized(text, max_chars)
+    ]
 
     groups: list[list[Paragraph]] = []
     for paragraph in paragraphs:
@@ -55,6 +61,30 @@ def with_sections(paragraphs: Iterable[tuple[int, str]]) -> list[Paragraph]:
         section = tuple(title for _, title in headings)
         result.append((page_number, section, paragraph))
     return result
+
+
+def split_oversized(text: str, max_chars: int) -> list[str]:
+    if len(text) <= max_chars:
+        return [text]
+    lines = text.split(LINE_SEPARATOR)
+    header = lines[:2] if is_table(lines) else []
+    pieces: list[list[str]] = [[]]
+    for line in lines[len(header) :]:
+        if (
+            pieces[-1]
+            and len(LINE_SEPARATOR.join([*header, *pieces[-1], line])) > max_chars
+        ):
+            pieces.append([])
+        pieces[-1].append(line)
+    return [LINE_SEPARATOR.join([*header, *piece]) for piece in pieces]
+
+
+def is_table(lines: list[str]) -> bool:
+    return (
+        len(lines) >= 2
+        and all(line.startswith("|") for line in lines)
+        and TABLE_SEPARATOR_ROW.match(lines[1]) is not None
+    )
 
 
 def is_heading(text: str) -> bool:
