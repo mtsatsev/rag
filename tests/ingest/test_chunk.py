@@ -1,7 +1,9 @@
 import unittest
 
 from rag.ingest.chunk import chunk_document
+from rag.ingest.parse import parse_pdf
 from rag.models import DocumentInfo, ParsedDocument, ParsedPage
+from tests.documents import KID_PDF, require_pdf
 
 INFO = DocumentInfo(doc_type="kid", fund="Test Fund", umbrella_fund="Test Umbrella")
 
@@ -744,3 +746,79 @@ class TestChunkDocumentFunds(unittest.TestCase):
         chunks = chunk_document(doc, PROSPECTUS_INFO, detect_fund=detect_test_fund)
 
         self.assertEqual(section_of(chunks, "Текст за Бета."), "")
+
+
+KID_FUND = "Enhanced Intelligence Global Allocation Responsible Investing"
+KID_INFO = DocumentInfo(doc_type="kid", fund=KID_FUND, umbrella_fund="Optimum Fund")
+
+
+def without_leading_headings(text: str) -> str:
+    paragraphs = text.split("\n\n")
+    while paragraphs and is_heading(paragraphs[0]):
+        paragraphs.pop(0)
+    return "\n\n".join(paragraphs)
+
+
+class TestChunkDocumentRealKid(unittest.TestCase):
+    @classmethod
+    def setUpClass(cls):
+        cls.chunks = chunk_document(parse_pdf(require_pdf(KID_PDF)), KID_INFO)
+
+    def test_chunk_document_when_real_kid_is_chunked_then_no_chunk_body_exceeds_max_chars(
+        self,
+    ):
+        # Carried headings may push a chunk over max_chars (accepted trade-off); the body after them may not.
+        for chunk in self.chunks:
+            with self.subTest(chunk=chunk.metadata.chunk_index):
+                self.assertLessEqual(len(without_leading_headings(chunk.text)), 1500)
+
+    def test_chunk_document_when_real_kid_is_chunked_then_every_chunk_is_within_pages_one_to_four(
+        self,
+    ):
+        for chunk in self.chunks:
+            with self.subTest(chunk=chunk.metadata.chunk_index):
+                self.assertGreaterEqual(chunk.metadata.page_start, 1)
+                self.assertLessEqual(chunk.metadata.page_end, 4)
+
+    def test_chunk_document_when_real_kid_is_chunked_then_every_page_is_covered_by_a_chunk(
+        self,
+    ):
+        covered = {
+            page
+            for chunk in self.chunks
+            for page in range(chunk.metadata.page_start, chunk.metadata.page_end + 1)
+        }
+
+        self.assertEqual(covered, {1, 2, 3, 4})
+
+    def test_chunk_document_when_real_kid_is_chunked_then_moderate_scenario_row_is_intact_in_exactly_one_chunk(
+        self,
+    ):
+        rows = [
+            line
+            for chunk in self.chunks
+            for line in chunk.text.split("\n")
+            if line.startswith("|Умерен|")
+        ]
+
+        self.assertEqual(len(rows), 1)
+        self.assertIn("10 350 EUR", rows[0])
+        self.assertIn("12 270 EUR", rows[0])
+
+    def test_chunk_document_when_real_kid_is_chunked_then_no_chunk_contains_markdown_or_html_artifacts(
+        self,
+    ):
+        for chunk in self.chunks:
+            with self.subTest(chunk=chunk.metadata.chunk_index):
+                for artifact in ("**", "<br>", "<!--", "<u>"):
+                    self.assertNotIn(artifact, chunk.text)
+
+    def test_chunk_document_when_real_kid_is_chunked_then_every_chunk_has_the_kid_fund_and_umbrella(
+        self,
+    ):
+        for chunk in self.chunks:
+            with self.subTest(chunk=chunk.metadata.chunk_index):
+                self.assertEqual(
+                    (chunk.metadata.fund, chunk.metadata.umbrella_fund),
+                    (KID_FUND, "Optimum Fund"),
+                )
