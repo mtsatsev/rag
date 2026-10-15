@@ -475,3 +475,82 @@ class TestChunkDocumentSentences(unittest.TestCase):
         chunks = chunk_document(make_document((1, row)), INFO, max_chars=50)
 
         self.assertEqual([chunk.text for chunk in chunks], [row])
+
+
+class TestChunkDocumentIdentity(unittest.TestCase):
+    TEXT = "\n\n".join(letter * 40 for letter in "АБВ")
+
+    def test_chunk_document_when_same_document_is_chunked_twice_then_chunk_ids_are_equal(
+        self,
+    ):
+        first = chunk_document(make_document((1, self.TEXT)), INFO, max_chars=50)
+        second = chunk_document(make_document((1, self.TEXT)), INFO, max_chars=50)
+
+        self.assertEqual(
+            [chunk.chunk_id for chunk in first], [chunk.chunk_id for chunk in second]
+        )
+
+    def test_chunk_document_when_document_has_several_chunks_then_chunk_ids_are_unique(
+        self,
+    ):
+        chunks = chunk_document(make_document((1, self.TEXT)), INFO, max_chars=50)
+
+        self.assertEqual(len({chunk.chunk_id for chunk in chunks}), len(chunks))
+
+    def test_chunk_document_when_file_content_changes_then_all_chunk_ids_change(self):
+        original = chunk_document(make_document((1, self.TEXT)), INFO, max_chars=50)
+        replaced_doc = make_document((1, self.TEXT)).model_copy(
+            update={"content_hash": "def456"}
+        )
+
+        replaced = chunk_document(replaced_doc, INFO, max_chars=50)
+
+        self.assertFalse(
+            {chunk.chunk_id for chunk in original}
+            & {chunk.chunk_id for chunk in replaced}
+        )
+
+    def test_chunk_document_when_document_is_chunked_then_document_fields_are_copied_to_every_chunk(
+        self,
+    ):
+        chunks = chunk_document(make_document((1, self.TEXT)), INFO, max_chars=50)
+
+        for chunk in chunks:
+            with self.subTest(chunk=chunk.metadata.chunk_index):
+                self.assertEqual(
+                    (
+                        chunk.metadata.doc_id,
+                        chunk.metadata.file_name,
+                        chunk.metadata.content_hash,
+                    ),
+                    ("test", "test.pdf", "abc123"),
+                )
+
+    def test_chunk_document_when_document_is_chunked_then_document_info_fields_are_copied_to_every_chunk(
+        self,
+    ):
+        chunks = chunk_document(make_document((1, self.TEXT)), INFO, max_chars=50)
+
+        for chunk in chunks:
+            with self.subTest(chunk=chunk.metadata.chunk_index):
+                self.assertEqual(
+                    (
+                        chunk.metadata.doc_type,
+                        chunk.metadata.fund,
+                        chunk.metadata.umbrella_fund,
+                    ),
+                    ("kid", "Test Fund", "Test Umbrella"),
+                )
+
+    def test_chunk_document_when_document_is_not_fund_specific_then_fund_fields_are_none(
+        self,
+    ):
+        info = DocumentInfo(doc_type="investor_rights", fund=None, umbrella_fund=None)
+
+        chunks = chunk_document(make_document((1, self.TEXT)), info, max_chars=50)
+
+        for chunk in chunks:
+            with self.subTest(chunk=chunk.metadata.chunk_index):
+                self.assertEqual(
+                    (chunk.metadata.fund, chunk.metadata.umbrella_fund), (None, None)
+                )
