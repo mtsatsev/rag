@@ -1,9 +1,10 @@
 import unittest
 
 from rag.ingest.chunk import chunk_document
+from rag.ingest.funds import document_info, fund_detector, load_registry
 from rag.ingest.parse import parse_pdf
 from rag.models import DocumentInfo, ParsedDocument, ParsedPage
-from tests.documents import KID_PDF, require_pdf
+from tests.documents import KID_PDF, PROSPECTUS_PDF, require_pdf
 
 INFO = DocumentInfo(doc_type="kid", fund="Test Fund", umbrella_fund="Test Umbrella")
 
@@ -822,3 +823,73 @@ class TestChunkDocumentRealKid(unittest.TestCase):
                     (chunk.metadata.fund, chunk.metadata.umbrella_fund),
                     (KID_FUND, "Optimum Fund"),
                 )
+
+
+class TestChunkDocumentRealProspectus(unittest.TestCase):
+    # Page 1 is included on purpose: its large title font shifts the sub-fund heading from "#" to "##".
+    PAGES = [1, 24, 25, 26]
+
+    @classmethod
+    def setUpClass(cls):
+        registry = load_registry()
+        doc = parse_pdf(require_pdf(PROSPECTUS_PDF), pages=cls.PAGES)
+        cls.chunks = chunk_document(
+            doc,
+            document_info(registry, PROSPECTUS_PDF),
+            detect_fund=fund_detector(registry, PROSPECTUS_PDF),
+        )
+        cls.umbrella_chunks = [
+            chunk for chunk in cls.chunks if chunk.metadata.page_end <= 24
+        ]
+        cls.sub_fund_chunks = [
+            chunk for chunk in cls.chunks if chunk.metadata.page_start >= 25
+        ]
+
+    def test_chunk_document_when_pages_precede_the_first_sub_fund_then_chunks_are_umbrella_level(
+        self,
+    ):
+        self.assertTrue(self.umbrella_chunks)
+        for chunk in self.umbrella_chunks:
+            with self.subTest(chunk=chunk.metadata.chunk_index):
+                self.assertIsNone(chunk.metadata.fund)
+
+    def test_chunk_document_when_pages_follow_the_sub_fund_heading_then_chunks_have_that_fund(
+        self,
+    ):
+        self.assertTrue(self.sub_fund_chunks)
+        for chunk in self.sub_fund_chunks:
+            with self.subTest(chunk=chunk.metadata.chunk_index):
+                self.assertEqual(chunk.metadata.fund, KID_FUND)
+
+    def test_chunk_document_when_fund_changes_between_pages_then_no_chunk_spans_both_funds(
+        self,
+    ):
+        self.assertEqual(
+            len(self.umbrella_chunks) + len(self.sub_fund_chunks), len(self.chunks)
+        )
+
+    def test_chunk_document_when_sub_fund_starts_then_its_first_chunk_starts_with_the_sub_fund_heading(
+        self,
+    ):
+        self.assertRegex(
+            self.sub_fund_chunks[0].text,
+            rf"^#+ Information concerning the sub-fund {KID_FUND}",
+        )
+
+    def test_chunk_document_when_sub_fund_starts_then_umbrella_sections_do_not_leak_into_its_chunks(
+        self,
+    ):
+        for chunk in self.sub_fund_chunks:
+            with self.subTest(chunk=chunk.metadata.chunk_index):
+                self.assertTrue(
+                    chunk.metadata.section.startswith(
+                        "Information concerning the sub-fund"
+                    )
+                )
+
+    def test_chunk_document_when_prospectus_is_chunked_then_every_chunk_has_the_optimum_fund_umbrella(
+        self,
+    ):
+        for chunk in self.chunks:
+            with self.subTest(chunk=chunk.metadata.chunk_index):
+                self.assertEqual(chunk.metadata.umbrella_fund, "Optimum Fund")
