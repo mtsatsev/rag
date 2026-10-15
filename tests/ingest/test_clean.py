@@ -141,3 +141,54 @@ class TestCleanMarkdownHomoglyphs(unittest.TestCase):
         self.assertEqual(
             clean_markdown("ISIN-код: BE6316179249"), "ISIN-код: BE6316179249"
         )
+
+
+class TestCleanMarkdownWhitespace(unittest.TestCase):
+    def test_clean_markdown_when_line_has_trailing_spaces_then_they_are_removed(self):
+        self.assertEqual(
+            clean_markdown("Резюме \nПодфондът насърчава "),
+            "Резюме\nПодфондът насърчава",
+        )
+
+    def test_clean_markdown_when_words_are_separated_by_multiple_spaces_then_a_single_space_remains(
+        self,
+    ):
+        self.assertEqual(
+            clean_markdown("as stated in the  acounts of  the Bevek"),
+            "as stated in the acounts of the Bevek",
+        )
+
+    def test_clean_markdown_when_heading_has_multiple_spaces_then_heading_marker_and_single_spaces_remain(
+        self,
+    ):
+        self.assertEqual(
+            clean_markdown("## 1.    Basic details"), "## 1. Basic details"
+        )
+
+    def test_clean_markdown_when_text_has_three_or_more_newlines_then_a_single_blank_line_remains(
+        self,
+    ):
+        self.assertEqual(
+            clean_markdown("Първи абзац.\n\n\n\nВтори абзац."),
+            "Първи абзац.\n\nВтори абзац.",
+        )
+
+    def test_clean_markdown_when_text_has_leading_and_trailing_blank_lines_then_they_are_stripped(
+        self,
+    ):
+        self.assertEqual(
+            clean_markdown("\n\nТекст на страницата.\n\n"), "Текст на страницата."
+        )
+
+    def test_clean_markdown_when_text_has_a_non_breaking_space_then_it_becomes_a_regular_space(
+        self,
+    ):
+        self.assertEqual(clean_markdown("10 350 EUR"), "10 350 EUR")
+
+    def test_clean_markdown_when_lines_are_separated_by_a_single_newline_then_it_is_kept(
+        self,
+    ):
+        self.assertEqual(
+            clean_markdown("Година на стартиране: 2022\nВалута: евро"),
+            "Година на стартиране: 2022\nВалута: евро",
+        )
