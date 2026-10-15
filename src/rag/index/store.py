@@ -41,7 +41,8 @@ class ChunkStore:
 
     @property
     def document_ids(self) -> set[str]:
-        raise NotImplementedError
+        metadatas = self.collection.get(include=["metadatas"])["metadatas"]
+        return {metadata["doc_id"] for metadata in metadatas}
 
     def has_document(self, doc_id: str, content_hash: str) -> bool:
         where = {"$and": [{"doc_id": doc_id}, {"content_hash": content_hash}]}

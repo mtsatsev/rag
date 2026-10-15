@@ -7,7 +7,7 @@ from rag.models import ParsedDocument, ParsedPage
 
 
 def file_hash(path: Path) -> str:
-    raise NotImplementedError
+    return hashlib.sha256(path.read_bytes()).hexdigest()
 
 
 def parse_pdf(pdf_path: Path, pages: list[int] | None = None) -> ParsedDocument:
@@ -25,7 +25,7 @@ def parse_pdf(pdf_path: Path, pages: list[int] | None = None) -> ParsedDocument:
     return ParsedDocument(
         doc_id=pdf_path.stem,
         file_name=pdf_path.name,
-        content_hash=hashlib.sha256(pdf_path.read_bytes()).hexdigest(),
+        content_hash=file_hash(pdf_path),
         pages=[
             ParsedPage(
                 page_number=chunk["metadata"]["page_number"], markdown=chunk["text"]
