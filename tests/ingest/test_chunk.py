@@ -34,6 +34,7 @@ SCENARIO_TABLE = [
     "|Умерен|10 350 EUR|12 270 EUR|",
     "|Благоприятен|14 280 EUR|15 010 EUR|",
 ]
+TABLE_HEADER = SCENARIO_TABLE[:2]  # header row + separator row
 
 
 class TestChunkDocumentPages(unittest.TestCase):
@@ -315,7 +316,7 @@ class TestChunkDocumentSize(unittest.TestCase):
             [chunk.text for chunk in chunks], ["А" * 30 + "\n" + "Б" * 30, "В" * 30]
         )
 
-    def test_chunk_document_when_table_is_longer_than_max_chars_then_every_row_stays_intact_in_exactly_one_chunk(
+    def test_chunk_document_when_table_is_longer_than_max_chars_then_every_data_row_stays_intact_in_exactly_one_chunk(
         self,
     ):
         doc = make_document((1, "\n".join(SCENARIO_TABLE)))
@@ -323,7 +324,7 @@ class TestChunkDocumentSize(unittest.TestCase):
         chunks = chunk_document(doc, INFO, max_chars=80)
 
         self.assertGreater(len(chunks), 1)
-        for row in SCENARIO_TABLE:
+        for row in SCENARIO_TABLE[2:]:
             with self.subTest(row=row):
                 self.assertEqual(
                     sum(row in chunk.text.split("\n") for chunk in chunks), 1
@@ -352,3 +353,59 @@ class TestChunkDocumentSize(unittest.TestCase):
                 self.assertEqual(
                     (chunk.metadata.page_start, chunk.metadata.page_end), (3, 3)
                 )
+
+
+class TestChunkDocumentTableHeader(unittest.TestCase):
+    def test_chunk_document_when_table_is_split_then_every_piece_starts_with_the_header_and_separator_rows(
+        self,
+    ):
+        chunks = chunk_document(
+            make_document((1, "\n".join(SCENARIO_TABLE))), INFO, max_chars=80
+        )
+
+        self.assertGreater(len(chunks), 1)
+        for chunk in chunks:
+            with self.subTest(chunk=chunk.metadata.chunk_index):
+                self.assertEqual(chunk.text.split("\n")[:2], TABLE_HEADER)
+
+    def test_chunk_document_when_table_is_split_then_header_is_not_repeated_within_a_piece(
+        self,
+    ):
+        chunks = chunk_document(
+            make_document((1, "\n".join(SCENARIO_TABLE))), INFO, max_chars=80
+        )
+
+        for chunk in chunks:
+            with self.subTest(chunk=chunk.metadata.chunk_index):
+                self.assertEqual(chunk.text.split("\n").count(TABLE_HEADER[0]), 1)
+
+    def test_chunk_document_when_table_is_split_then_every_piece_including_its_repeated_header_fits_max_chars(
+        self,
+    ):
+        chunks = chunk_document(
+            make_document((1, "\n".join(SCENARIO_TABLE))), INFO, max_chars=80
+        )
+
+        for chunk in chunks:
+            with self.subTest(chunk=chunk.metadata.chunk_index):
+                self.assertLessEqual(len(chunk.text), 80)
+
+    def test_chunk_document_when_table_fits_max_chars_then_it_stays_one_piece_with_a_single_header(
+        self,
+    ):
+        table = "\n".join(SCENARIO_TABLE)
+
+        chunks = chunk_document(make_document((1, table)), INFO)
+
+        self.assertEqual([chunk.text for chunk in chunks], [table])
+
+    def test_chunk_document_when_oversized_paragraph_is_not_a_table_then_no_line_is_repeated(
+        self,
+    ):
+        lines = ["А" * 30, "Б" * 30, "В" * 30]
+
+        chunks = chunk_document(
+            make_document((1, "\n".join(lines))), INFO, max_chars=40
+        )
+
+        self.assertEqual([chunk.text for chunk in chunks], lines)
