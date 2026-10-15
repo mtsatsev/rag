@@ -73,6 +73,26 @@ class FundRegistry(BaseModel):
 
     model_config = ConfigDict(frozen=True, validate_assignment=True)
 
+    @model_validator(mode="after")
+    def validate_references(self) -> Self:
+        umbrellas = {umbrella.name for umbrella in self.umbrellas}
+        funds = {fund.name for fund in self.funds}
+        for fund in self.funds:
+            if fund.umbrella not in umbrellas:
+                raise ValueError(
+                    f"Fund {fund.name!r} has unknown umbrella {fund.umbrella!r}"
+                )
+        for file_name, entry in self.documents.items():
+            if entry.fund is not None and entry.fund not in funds:
+                raise ValueError(
+                    f"Document {file_name!r} has unknown fund {entry.fund!r}"
+                )
+            if entry.umbrella is not None and entry.umbrella not in umbrellas:
+                raise ValueError(
+                    f"Document {file_name!r} has unknown umbrella {entry.umbrella!r}"
+                )
+        return self
+
 
 class ChunkMetadata(BaseModel):
     doc_id: str = Field(description="File stem, e.g. '11074'")

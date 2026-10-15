@@ -166,6 +166,15 @@ class TestDetectFund(unittest.TestCase):
             ENHANCED,
         )
 
+    def test_detect_fund_when_sub_fund_heading_is_at_a_deeper_level_then_returns_the_fund_name(
+        self,
+    ):
+        # pymupdf4llm assigns heading levels relative to the other font sizes in the parsed pages
+        self.assertEqual(
+            detect_fund(REGISTRY, f"## Information concerning the sub-fund {ENHANCED}"),
+            ENHANCED,
+        )
+
     def test_detect_fund_when_paragraph_is_an_annex_title_then_returns_the_name_without_the_umbrella_prefix(
         self,
     ):
