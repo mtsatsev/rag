@@ -409,3 +409,69 @@ class TestChunkDocumentTableHeader(unittest.TestCase):
         )
 
         self.assertEqual([chunk.text for chunk in chunks], lines)
+
+
+class TestChunkDocumentSentences(unittest.TestCase):
+    def test_chunk_document_when_single_line_is_longer_than_max_chars_then_it_is_split_at_sentence_ends(
+        self,
+    ):
+        line = "Първо изречение е тук. Второ изречение е тук. Трето изречение е тук."
+
+        chunks = chunk_document(make_document((1, line)), INFO, max_chars=50)
+
+        self.assertEqual(
+            [chunk.text for chunk in chunks],
+            ["Първо изречение е тук. Второ изречение е тук.", "Трето изречение е тук."],
+        )
+
+    def test_chunk_document_when_sentences_end_with_question_or_exclamation_marks_then_they_are_split_there_too(
+        self,
+    ):
+        line = "Какво е фондът? Фондът е подфонд! Това е краят."
+
+        chunks = chunk_document(make_document((1, line)), INFO, max_chars=40)
+
+        self.assertEqual(
+            [chunk.text for chunk in chunks],
+            ["Какво е фондът? Фондът е подфонд!", "Това е краят."],
+        )
+
+    def test_chunk_document_when_period_is_followed_by_a_lowercase_word_then_it_is_not_treated_as_a_sentence_end(
+        self,
+    ):
+        line = "Управлява се от Кей Би Си, т.е. от управляващото дружество. Второто изречение е тук."
+
+        chunks = chunk_document(make_document((1, line)), INFO, max_chars=40)
+
+        self.assertEqual(
+            [chunk.text for chunk in chunks],
+            [
+                "Управлява се от Кей Би Си, т.е. от управляващото дружество.",
+                "Второто изречение е тук.",
+            ],
+        )
+
+    def test_chunk_document_when_long_line_is_inside_a_multi_line_paragraph_then_only_that_line_is_split_into_sentences(
+        self,
+    ):
+        paragraph = "Кратък ред.\nПърво изречение е тук. Второ изречение е тук. Трето изречение е тук."
+
+        chunks = chunk_document(make_document((1, paragraph)), INFO, max_chars=50)
+
+        self.assertEqual(
+            [chunk.text for chunk in chunks],
+            [
+                "Кратък ред.",
+                "Първо изречение е тук. Второ изречение е тук.",
+                "Трето изречение е тук.",
+            ],
+        )
+
+    def test_chunk_document_when_long_line_is_a_table_row_then_it_is_not_split_into_sentences(
+        self,
+    ):
+        row = "|Разходи за вход|Процентът е 3%. Таксата се плаща веднъж. Процентът е 3%. Таксата се плаща веднъж. |"
+
+        chunks = chunk_document(make_document((1, row)), INFO, max_chars=50)
+
+        self.assertEqual([chunk.text for chunk in chunks], [row])
