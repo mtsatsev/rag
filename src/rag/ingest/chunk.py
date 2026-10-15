@@ -25,10 +25,16 @@ def chunk_document(
     paragraphs: list[Paragraph] = [
         paragraph._replace(text=piece)
         for paragraph in with_sections(
-            (page.page_number, paragraph)
-            for page in doc.pages
-            for paragraph in clean_markdown(page.markdown).split(PARAGRAPH_SEPARATOR)
-            if paragraph
+            (
+                (page.page_number, paragraph)
+                for page in doc.pages
+                for paragraph in clean_markdown(page.markdown).split(
+                    PARAGRAPH_SEPARATOR
+                )
+                if paragraph
+            ),
+            fund=info.fund,
+            detect_fund=detect_fund,
         )
         for piece in split_oversized(paragraph.text, max_chars)
     ]
@@ -42,10 +48,15 @@ def chunk_document(
             + len(paragraph.text)
             <= max_chars
             and not starts_new_section(groups[-1], paragraph.text)
+            and same_fund(groups[-1], paragraph)
         ):
             groups[-1].append(paragraph)
         else:
-            carried = pop_trailing_headings(groups[-1]) if groups else []
+            carried = (
+                pop_trailing_headings(groups[-1])
+                if groups and same_fund(groups[-1], paragraph)
+                else []
+            )
             if groups and not groups[-1]:
                 groups.pop()
             groups.append([*carried, paragraph])
@@ -53,17 +64,24 @@ def chunk_document(
     return [to_chunk(doc, info, index, group) for index, group in enumerate(groups)]
 
 
-def with_sections(paragraphs: Iterable[tuple[int, str]]) -> list[Paragraph]:
+def with_sections(
+    paragraphs: Iterable[tuple[int, str]],
+    fund: str | None = None,
+    detect_fund: Callable[[str], str | None] | None = None,
+) -> list[Paragraph]:
     headings: list[tuple[int, str]] = []
     result = []
     for page_number, paragraph in paragraphs:
+        if detect_fund and (detected := detect_fund(paragraph)):
+            fund = detected
+            headings.clear()
         if match := HEADING.match(paragraph):
             level = len(match.group(1))
             while headings and headings[-1][0] >= level:
                 headings.pop()
             headings.append((level, match.group(2)))
         section = tuple(title for _, title in headings)
-        result.append(Paragraph(page_number, section, paragraph))
+        result.append(Paragraph(page_number, section, paragraph, fund))
     return result
 
 
@@ -115,6 +133,10 @@ def starts_new_section(group: list[Paragraph], text: str) -> bool:
     return TOP_LEVEL_HEADING.match(text) is not None and not only_headings_so_far
 
 
+def same_fund(group: list[Paragraph], paragraph: Paragraph) -> bool:
+    return group[-1].fund == paragraph.fund
+
+
 def pop_trailing_headings(group: list[Paragraph]) -> list[Paragraph]:
     carried: list[Paragraph] = []
     while group and is_heading(group[-1].text):
@@ -147,7 +169,7 @@ def to_chunk(
             file_name=doc.file_name,
             content_hash=doc.content_hash,
             doc_type=info.doc_type,
-            fund=info.fund,
+            fund=group[0].fund,
             umbrella_fund=info.umbrella_fund,
             section=common_section(group),
             page_start=group[0].page_number,

@@ -36,6 +36,25 @@ SCENARIO_TABLE = [
 ]
 TABLE_HEADER = SCENARIO_TABLE[:2]  # header row + separator row
 
+PROSPECTUS_INFO = DocumentInfo(
+    doc_type="prospectus", fund=None, umbrella_fund="Optimum Fund"
+)
+FUND_START_PREFIXES = (
+    "# Information concerning the sub-fund ",
+    "Annex for Optimum Fund ",
+)
+
+
+def detect_test_fund(paragraph: str) -> str | None:
+    for prefix in FUND_START_PREFIXES:
+        if paragraph.startswith(prefix):
+            return paragraph.removeprefix(prefix)
+    return None
+
+
+def fund_of(chunks, text: str) -> str | None:
+    return next(chunk.metadata.fund for chunk in chunks if text in chunk.text)
+
 
 class TestChunkDocumentPages(unittest.TestCase):
     def test_chunk_document_when_all_paragraphs_are_on_one_page_then_page_start_equals_page_end(
@@ -611,26 +630,6 @@ class TestChunkDocumentText(unittest.TestCase):
         chunks = chunk_document(make_document((1, "Текст без заглавие.")), info)
 
         self.assertEqual(chunks[0].embed_text, chunks[0].text)
-
-
-PROSPECTUS_INFO = DocumentInfo(
-    doc_type="prospectus", fund=None, umbrella_fund="Optimum Fund"
-)
-FUND_START_PREFIXES = (
-    "# Information concerning the sub-fund ",
-    "Annex for Optimum Fund ",
-)
-
-
-def detect_test_fund(paragraph: str) -> str | None:
-    for prefix in FUND_START_PREFIXES:
-        if paragraph.startswith(prefix):
-            return paragraph.removeprefix(prefix)
-    return None
-
-
-def fund_of(chunks, text: str) -> str | None:
-    return next(chunk.metadata.fund for chunk in chunks if text in chunk.text)
 
 
 class TestChunkDocumentFunds(unittest.TestCase):

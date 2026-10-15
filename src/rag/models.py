@@ -81,3 +81,4 @@ class Paragraph(NamedTuple):
     page_number: int
     section: tuple[str, ...]
     text: str
+    fund: str | None = None
