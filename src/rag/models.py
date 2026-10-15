@@ -219,3 +219,9 @@ class Answer(BaseModel):
     funds: list[str]
     sources: list[Source]
     conflicts: list[str] = []
+
+    def __str__(self) -> str:
+        return f"Answer(answer={self.answer}\n status={self.status}\n funds={self.funds}\n sources={self.sources}\n conflicts={self.conflicts})"
+
+    def __repr__(self) -> str:
+        return self.__str__()

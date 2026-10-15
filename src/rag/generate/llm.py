@@ -16,7 +16,7 @@ class OllamaClient:
         self,
         model: str = QWEN3_4B,
         host: str | None = None,
-        num_ctx: int = 8192,
+        num_ctx: int = 4096,
         temperature: float = 0.0,
     ) -> None:
 
