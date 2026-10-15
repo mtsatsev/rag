@@ -12,6 +12,8 @@ TOP_LEVEL_HEADING = re.compile(r"^#{1,2} ")
 SECTION_SEPARATOR = " > "
 LINE_SEPARATOR = "\n"
 TABLE_SEPARATOR_ROW = re.compile(r"^\|(\s*:?-+:?\s*\|)+$")
+SENTENCE_END = re.compile(r"(?<=[.?!]) (?=[A-ZА-Я])")
+WORD_SEPARATOR = " "
 
 Paragraph = tuple[int, tuple[str, ...], str]
 
@@ -76,7 +78,22 @@ def split_oversized(text: str, max_chars: int) -> list[str]:
         ):
             pieces.append([])
         pieces[-1].append(line)
-    return [LINE_SEPARATOR.join([*header, *piece]) for piece in pieces]
+    return [
+        part
+        for piece in pieces
+        for part in split_sentences(LINE_SEPARATOR.join([*header, *piece]), max_chars)
+    ]
+
+
+def split_sentences(text: str, max_chars: int) -> list[str]:
+    if len(text) <= max_chars or LINE_SEPARATOR in text or text.startswith("|"):
+        return [text]
+    parts: list[list[str]] = [[]]
+    for sentence in SENTENCE_END.split(text):
+        if parts[-1] and len(WORD_SEPARATOR.join([*parts[-1], sentence])) > max_chars:
+            parts.append([])
+        parts[-1].append(sentence)
+    return [WORD_SEPARATOR.join(part) for part in parts]
 
 
 def is_table(lines: list[str]) -> bool:
