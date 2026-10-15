@@ -1,0 +1,198 @@
+- id: cons_objective_en
+  question: What is the investment objective of ОББ ЕкспертИйз Дефанзивен Консервативен Отговорно Инвестиращ?
+  language: en
+  category: cross_lingual
+  funds: [ОББ ЕкспертИйз Дефанзивен Консервативен Отговорно Инвестиращ]
+  sources: [{doc_id: "18325", pages: [1, 1]}]
+- id: cons_min_sustainable_en
+  question: What is the minimum percentage of sustainable investments required for ОББ ЕкспертИйз Дефанзивен Консервативен Отговорно Инвестиращ?
+  language: en
+  category: cross_lingual
+  funds: [ОББ ЕкспертИйз Дефанзивен Консервативен Отговорно Инвестиращ]
+  sources: [{doc_id: "18325", pages: [2, 3]}]
+- id: cons_esg_risk_en
+  question: How does ОББ ЕкспертИйз Дефанзивен Консервативен Отговорно Инвестиращ evaluate ESG risk for companies?
+  language: en
+  category: cross_lingual
+  funds: [ОББ ЕкспертИйз Дефанзивен Консервативен Отговорно Инвестиращ]
+  sources: [{doc_id: "18325", pages: [6, 7]}]
+- id: rights_investor_en
+  question: What rights do I have as an investor in a collective investment scheme managed by KBC Asset Management?
+  language: en
+  category: manager_wide
+  sources: [{doc_id: "11074", pages: [1, 1]}]
+- id: rights_transfer_en
+  question: Can I transfer my fund units to another person?
+  language: en
+  category: manager_wide
+  sources: [{doc_id: "11074", pages: [1, 1]}]
+
+- id: cons_master_fund_bg
+  question: В кой главен фонд инвестира ОББ ЕкспертИйз Дефанзивен Консервативен Отговорно Инвестиращ?
+  language: bg
+  category: single_fund
+  funds: [ОББ ЕкспертИйз Дефанзивен Консервативен Отговорно Инвестиращ]
+  sources: [{doc_id: "18325", pages: [1, 1]}]
+- id: cons_min_sustainable_bg_casing
+  question: Какъв е минималният дял на устойчивите инвестиции на ОББ Експертийз Дефанзивен Консервативен Отговорно Инвестиращ?
+  language: bg
+  category: single_fund
+  funds: [ОББ ЕкспертИйз Дефанзивен Консервативен Отговорно Инвестиращ]
+  sources: [{doc_id: "18325", pages: [2, 3]}]
+- id: cons_exclusions_bg
+  question: Кои компании са изключени от инвестиционната вселена на ОББ ЕкспертИйз Дефанзивен Консервативен Отговорно Инвестиращ?
+  language: bg
+  category: single_fund
+  funds: [ОББ ЕкспертИйз Дефанзивен Консервативен Отговорно Инвестиращ]
+  sources: [{doc_id: "18325", pages: [3, 3]}]
+
+- id: bal_return_2024_bg
+  question: Каква е доходността на ОББ ЕкспертИйз Дефанзивен Балансиран Отговорно Инвестиращ през 2024 г.?
+  language: bg
+  category: single_fund
+  funds: [ОББ ЕкспертИйз Дефанзивен Балансиран Отговорно Инвестиращ]
+  sources: [{doc_id: "18368", pages: [1, 1]}]
+- id: bal_launch_year_en
+  question: In which year was ОББ ЕкспертИйз Дефанзивен Балансиран Отговорно Инвестиращ launched?
+  language: en
+  category: cross_lingual
+  funds: [ОББ ЕкспертИйз Дефанзивен Балансиран Отговорно Инвестиращ]
+  sources: [{doc_id: "18368", pages: [1, 1]}]
+- id: bal_returns_by_isin_en
+  question: What were the past annual returns of BG9000005223?
+  language: en
+  category: isin
+  funds: [ОББ ЕкспертИйз Дефанзивен Балансиран Отговорно Инвестиращ]
+  sources: [{doc_id: "18368", pages: [1, 1]}]
+
+- id: bal_min_sustainable_confusion_en
+  question: What is the minimum share of sustainable investments of ОББ ЕкспертИйз Дефанзивен Балансиран Отговорно Инвестиращ?
+  language: en
+  category: fund_confusion
+  funds: [ОББ ЕкспертИйз Дефанзивен Балансиран Отговорно Инвестиращ]
+  sources: []
+- id: cons_return_2023_confusion_bg
+  question: Каква е доходността на ОББ ЕкспертИйз Дефанзивен Консервативен Отговорно Инвестиращ през 2023 г.?
+  language: bg
+  category: fund_confusion
+  funds: [ОББ ЕкспертИйз Дефанзивен Консервативен Отговорно Инвестиращ]
+  sources: []
+
+- id: enh_risk_class_bg
+  question: Каква е категорията на риск на Enhanced Intelligence Global Allocation Responsible Investing?
+  language: bg
+  category: single_fund
+  funds: [Enhanced Intelligence Global Allocation Responsible Investing]
+  sources: [{doc_id: KID_BE6316179249_BG, pages: [2, 2]}]
+- id: enh_risk_class_en
+  question: What is the risk class of Enhanced Intelligence Global Allocation Responsible Investing?
+  language: en
+  category: cross_lingual
+  funds: [Enhanced Intelligence Global Allocation Responsible Investing]
+  sources: [{doc_id: KID_BE6316179249_BG, pages: [2, 2]}]
+- id: enh_holding_period_en
+  question: What is the recommended holding period for Enhanced Intelligence Global Allocation Responsible Investing?
+  language: en
+  category: cross_lingual
+  funds: [Enhanced Intelligence Global Allocation Responsible Investing]
+  sources: [{doc_id: KID_BE6316179249_BG, pages: [2, 3]}]
+- id: enh_entry_fees_bg
+  question: Какви са таксите за записване на Enhanced Intelligence Global Allocation Responsible Investing?
+  language: bg
+  category: single_fund
+  funds: [Enhanced Intelligence Global Allocation Responsible Investing]
+  sources: [{doc_id: KID_BE6316179249_BG, pages: [3, 3]}]
+- id: enh_target_allocation_en
+  question: What is the target allocation between equities and bonds of Enhanced Intelligence Global Allocation Responsible Investing?
+  language: en
+  category: cross_lingual
+  funds: [Enhanced Intelligence Global Allocation Responsible Investing]
+  sources: [{doc_id: KID_BE6316179249_BG, pages: [1, 1]}]
+- id: enh_moderate_scenario_by_isin_en
+  question: How much would I get back after 5 years in the moderate scenario if I invest 10 000 EUR in BE6316179249?
+  language: en
+  category: isin
+  funds: [Enhanced Intelligence Global Allocation Responsible Investing]
+  sources: [{doc_id: KID_BE6316179249_BG, pages: [2, 3]}]
+- id: enh_complaint_bg
+  question: Как мога да подам жалба относно Enhanced Intelligence Global Allocation Responsible Investing?
+  language: bg
+  category: single_fund
+  funds: [Enhanced Intelligence Global Allocation Responsible Investing]
+  sources: [{doc_id: KID_BE6316179249_BG, pages: [3, 3]}]
+- id: enh_min_sustainable_multi_doc_en
+  question: What minimum share of sustainable investments does Enhanced Intelligence Global Allocation Responsible Investing commit to?
+  language: en
+  category: multi_doc
+  funds: [Enhanced Intelligence Global Allocation Responsible Investing]
+  sources:
+    - {doc_id: "17126", pages: [1, 1]}
+    - {doc_id: FU_BF065_EN, pages: [502, 502]}
+- id: enh_incorporation_en
+  question: When was the sub-fund Enhanced Intelligence Global Allocation Responsible Investing incorporated?
+  language: en
+  category: single_fund
+  funds: [Enhanced Intelligence Global Allocation Responsible Investing]
+  sources: [{doc_id: FU_BF065_EN, pages: [25, 25]}]
+- id: enh_machine_learning_en
+  question: How does Enhanced Intelligence Global Allocation Responsible Investing use machine learning in its investment strategy?
+  language: en
+  category: single_fund
+  funds: [Enhanced Intelligence Global Allocation Responsible Investing]
+  sources: [{doc_id: FU_BF065_EN, pages: [26, 27]}]
+- id: enh_swing_pricing_multi_part_en
+  question: Can swing pricing be applied to Enhanced Intelligence Global Allocation Responsible Investing, and how does it work?
+  language: en
+  category: multi_part
+  funds: [Enhanced Intelligence Global Allocation Responsible Investing]
+  sources:
+    - {doc_id: FU_BF065_EN, pages: [34, 34]}
+    - {doc_id: FU_BF065_EN, pages: [24, 24]}
+
+- id: lookback3_life_en
+  question: Until when does the sub-fund ČSOB Lookback 3 exist?
+  language: en
+  category: prospectus_sub_fund
+  funds: [ČSOB Lookback 3]
+  sources: [{doc_id: FU_BF065_EN, pages: [352, 352]}]
+- id: kh_egeszseg_life_en
+  question: What is the term of the sub-fund K&H egészség?
+  language: en
+  category: prospectus_sub_fund
+  funds: [K&H egészség]
+  sources: [{doc_id: FU_BF065_EN, pages: [38, 38]}]
+- id: optimum_incorporation_en
+  question: When was Optimum Fund incorporated?
+  language: en
+  category: umbrella
+  sources: [{doc_id: FU_BF065_EN, pages: [1, 2]}]
+- id: optimum_auditor_en
+  question: Who is the statutory auditor of Optimum Fund?
+  language: en
+  category: umbrella
+  sources: [{doc_id: FU_BF065_EN, pages: [7, 7]}]
+
+- id: rights_redemption_bg
+  question: Имам ли право да поискам обратно изкупуване на дяловете си?
+  language: bg
+  category: manager_wide
+  sources: [{doc_id: "11074", pages: [1, 1]}]
+- id: rights_voting_bg
+  question: Дават ли дяловете във фонда право на глас?
+  language: bg
+  category: manager_wide
+  sources: [{doc_id: "11074", pages: [1, 1]}]
+
+- id: enh_dividend_2019_unanswerable_en
+  question: What dividend did Enhanced Intelligence Global Allocation Responsible Investing pay in 2019?
+  language: en
+  category: unanswerable
+  funds: [Enhanced Intelligence Global Allocation Responsible Investing]
+- id: plovdiv_branch_unanswerable_bg
+  question: Какъв е телефонът на клона на KBC в Пловдив?
+  language: bg
+  category: unanswerable
+- id: unknown_fund_costs_unanswerable_en
+  question: What are the ongoing costs of KBC Equity Fund Technology?
+  language: en
+  category: unanswerable
