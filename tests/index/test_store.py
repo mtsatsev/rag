@@ -186,3 +186,17 @@ class TestChunkStoreDocumentIds(StoreTestCase):
         self.store.replace_document(RIGHTS_CHUNKS)
 
         self.assertEqual(self.store.document_ids, {"kid", "rights"})
+
+
+class TestChunkStoreKnownFunds(StoreTestCase):
+    def test_known_funds_when_fund_specific_chunks_are_indexed_then_returns_their_fund_and_umbrella_once(
+        self,
+    ):
+        self.store.replace_document(KID_CHUNKS)
+
+        self.assertEqual(self.store.known_funds, {("Алфа", "Optimum Fund")})
+
+    def test_known_funds_when_chunks_have_no_fund_then_they_are_not_listed(self):
+        self.store.replace_document(RIGHTS_CHUNKS)
+
+        self.assertEqual(self.store.known_funds, set())

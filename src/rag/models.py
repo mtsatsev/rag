@@ -168,3 +168,26 @@ class FundQuery(BaseModel):
     )
 
     model_config = ConfigDict(frozen=True, validate_assignment=True)
+
+
+class RetrievedChunk(BaseModel):
+    chunk: Chunk = Field(description="The retrieved chunk")
+    score: float = Field(description="Reciprocal-rank-fusion score; higher is better")
+    dense_rank: int | None = Field(
+        description="1-based rank in dense search, None if absent"
+    )
+    keyword_rank: int | None = Field(
+        description="1-based rank in keyword search, None if absent"
+    )
+
+    model_config = ConfigDict(frozen=True, validate_assignment=True)
+
+
+class RetrievalResult(BaseModel):
+    question: str = Field(description="The user's question")
+    fund_query: FundQuery = Field(
+        description="Funds/umbrellas understood from the question"
+    )
+    chunks: list[RetrievedChunk] = Field(description="Best chunks, best first")
+
+    model_config = ConfigDict(frozen=True, validate_assignment=True)

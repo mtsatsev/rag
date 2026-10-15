@@ -44,6 +44,17 @@ class ChunkStore:
         metadatas = self.collection.get(include=["metadatas"])["metadatas"]
         return {metadata["doc_id"] for metadata in metadatas}
 
+    @property
+    def known_funds(self) -> set[tuple[str, str | None]]:
+        """(fund, umbrella) pairs of all fund-specific chunks in the index."""
+        metadatas = self.collection.get(
+            where={"fund": {"$ne": ""}}, include=["metadatas"]
+        )["metadatas"]
+        return {
+            (metadata["fund"], metadata["umbrella_fund"] or None)
+            for metadata in metadatas
+        }
+
     def has_document(self, doc_id: str, content_hash: str) -> bool:
         where = {"$and": [{"doc_id": doc_id}, {"content_hash": content_hash}]}
         return bool(self.collection.get(where=where, limit=1)["ids"])
