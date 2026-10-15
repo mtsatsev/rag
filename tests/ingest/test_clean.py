@@ -87,3 +87,57 @@ class TestCleanMarkdownStructure(unittest.TestCase):
         self.assertIn("ISIN код: BG9000005223", cleaned)
         self.assertNotIn("<!--", cleaned)
         self.assertNotIn("picture text", cleaned)
+
+
+class TestCleanMarkdownHomoglyphs(unittest.TestCase):
+    # Inputs contain a Latin look-alike letter (noted in each comment); expected outputs are pure Cyrillic.
+
+    def test_clean_markdown_when_cyrillic_word_starts_with_latin_uppercase_lookalike_then_it_becomes_cyrillic(
+        self,
+    ):
+        self.assertEqual(clean_markdown("Tози документ"), "Този документ")  # Latin T
+
+    def test_clean_markdown_when_cyrillic_word_contains_latin_lowercase_lookalike_then_it_becomes_cyrillic(
+        self,
+    ):
+        self.assertEqual(
+            clean_markdown("бъдещoто представяне"), "бъдещото представяне"
+        )  # Latin o
+
+    def test_clean_markdown_when_cyrillic_word_ends_with_latin_lookalike_then_it_becomes_cyrillic(
+        self,
+    ):
+        self.assertEqual(
+            clean_markdown("на дистрибуторa"), "на дистрибутора"
+        )  # Latin a
+
+    def test_clean_markdown_when_lookalike_word_is_in_a_sentence_then_only_that_word_changes(
+        self,
+    ):
+        self.assertEqual(clean_markdown("Валута: eвро"), "Валута: евро")  # Latin e
+
+    def test_clean_markdown_when_lookalike_word_is_inside_a_table_cell_then_it_becomes_cyrillic(
+        self,
+    ):
+        self.assertEqual(
+            clean_markdown("|Mакс. входна такса|3%|"), "|Макс. входна такса|3%|"
+        )  # Latin M
+
+    def test_clean_markdown_when_word_is_english_then_it_is_unchanged(self):
+        self.assertEqual(
+            clean_markdown("Optimum Fund Prospectus"), "Optimum Fund Prospectus"
+        )
+
+    def test_clean_markdown_when_english_name_is_inside_bulgarian_text_then_it_is_unchanged(
+        self,
+    ):
+        text = "Кей Би Си Асет Мениджмънт Н.В. (KBC Asset Management N.V.)"
+
+        self.assertEqual(clean_markdown(text), text)
+
+    def test_clean_markdown_when_token_is_an_isin_next_to_cyrillic_then_it_is_unchanged(
+        self,
+    ):
+        self.assertEqual(
+            clean_markdown("ISIN-код: BE6316179249"), "ISIN-код: BE6316179249"
+        )
