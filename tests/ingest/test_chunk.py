@@ -92,3 +92,96 @@ class TestChunkDocumentPages(unittest.TestCase):
         chunks = chunk_document(doc, INFO, max_chars=50)
 
         self.assertEqual([chunk.metadata.chunk_index for chunk in chunks], [0, 1, 2])
+
+
+def section_of(chunks, text: str) -> str:
+    return next(chunk.metadata.section for chunk in chunks if text in chunk.text)
+
+
+class TestChunkDocumentSections(unittest.TestCase):
+    def test_chunk_document_when_there_is_no_heading_then_section_is_empty(self):
+        chunks = chunk_document(make_document((1, "Абзац без заглавие.")), INFO)
+
+        self.assertEqual(chunks[0].metadata.section, "")
+
+    def test_chunk_document_when_paragraph_is_under_a_heading_then_section_is_that_heading(
+        self,
+    ):
+        chunks = chunk_document(
+            make_document((1, "# Резюме\n\nТекст на резюмето.")), INFO
+        )
+
+        self.assertEqual(section_of(chunks, "Текст на резюмето."), "Резюме")
+
+    def test_chunk_document_when_heading_has_markdown_emphasis_then_section_has_no_markers(
+        self,
+    ):
+        chunks = chunk_document(
+            make_document((1, "### **<u>Цел</u>**\n\nТекст на целта.")), INFO
+        )
+
+        self.assertEqual(section_of(chunks, "Текст на целта."), "Цел")
+
+    def test_chunk_document_when_subheading_follows_a_heading_then_section_is_the_heading_path(
+        self,
+    ):
+        doc = make_document(
+            (1, "# Резюме\n\nТекст на резюмето.\n\n## Цел\n\nТекст на целта.")
+        )
+
+        chunks = chunk_document(doc, INFO, max_chars=30)
+
+        self.assertEqual(section_of(chunks, "Текст на целта."), "Резюме > Цел")
+
+    def test_chunk_document_when_sibling_subheading_follows_then_it_replaces_the_previous_one(
+        self,
+    ):
+        doc = make_document((1, "# А\n\n## Б\n\nТекст под Б.\n\n## В\n\nТекст под В."))
+
+        chunks = chunk_document(doc, INFO, max_chars=20)
+
+        self.assertEqual(section_of(chunks, "Текст под В."), "А > В")
+
+    def test_chunk_document_when_new_top_level_heading_follows_then_deeper_headings_are_dropped(
+        self,
+    ):
+        doc = make_document((1, "# А\n\n## Б\n\nТекст под Б.\n\n# В\n\nТекст под В."))
+
+        chunks = chunk_document(doc, INFO, max_chars=20)
+
+        self.assertEqual(section_of(chunks, "Текст под В."), "В")
+
+    def test_chunk_document_when_heading_levels_are_skipped_then_shallower_heading_drops_the_deeper_one(
+        self,
+    ):
+        doc = make_document(
+            (1, "# А\n\n#### Б\n\nТекст под Б.\n\n## В\n\nТекст под В.")
+        )
+
+        chunks = chunk_document(doc, INFO, max_chars=20)
+
+        self.assertEqual(section_of(chunks, "Текст под Б."), "А > Б")
+        self.assertEqual(section_of(chunks, "Текст под В."), "А > В")
+
+    def test_chunk_document_when_section_continues_on_the_next_page_then_it_keeps_the_heading_from_the_previous_page(
+        self,
+    ):
+        doc = make_document(
+            (1, "# Разходи\n\nТекст на страница 1."), (2, "Текст на страница 2.")
+        )
+
+        chunks = chunk_document(doc, INFO, max_chars=25)
+
+        self.assertEqual(section_of(chunks, "Текст на страница 2."), "Разходи")
+
+    def test_chunk_document_when_chunk_packs_several_subsections_then_section_is_the_path_at_its_first_paragraph(
+        self,
+    ):
+        doc = make_document(
+            (1, "# А\n\n### Б\n\nТекст под Б.\n\n### В\n\nТекст под В.")
+        )
+
+        chunks = chunk_document(doc, INFO)
+
+        self.assertEqual(len(chunks), 1)
+        self.assertEqual(chunks[0].metadata.section, "А")
