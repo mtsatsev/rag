@@ -1,4 +1,4 @@
-from typing import Literal, Self
+from typing import Literal, NamedTuple, Self
 
 from pydantic import BaseModel, ConfigDict, Field, computed_field, model_validator
 
@@ -75,3 +75,9 @@ class Chunk(BaseModel):
             part for part in (self.metadata.fund, self.metadata.section) if part
         )
         return f"{header}\n\n{self.text}" if header else self.text
+
+
+class Paragraph(NamedTuple):
+    page_number: int
+    section: tuple[str, ...]
+    text: str

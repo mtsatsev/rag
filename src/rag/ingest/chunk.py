@@ -4,7 +4,7 @@ from collections.abc import Iterable
 from itertools import takewhile
 
 from rag.ingest.clean import clean_markdown
-from rag.models import Chunk, ChunkMetadata, DocumentInfo, ParsedDocument
+from rag.models import Chunk, ChunkMetadata, DocumentInfo, Paragraph, ParsedDocument
 
 PARAGRAPH_SEPARATOR = "\n\n"
 HEADING = re.compile(r"^(#{1,6}) (.+)$")
@@ -15,31 +15,30 @@ TABLE_SEPARATOR_ROW = re.compile(r"^\|(\s*:?-+:?\s*\|)+$")
 SENTENCE_END = re.compile(r"(?<=[.?!]) (?=[A-ZА-Я])")
 WORD_SEPARATOR = " "
 
-Paragraph = tuple[int, tuple[str, ...], str]
-
 
 def chunk_document(
     doc: ParsedDocument, info: DocumentInfo, max_chars: int = 1500
 ) -> list[Chunk]:
     paragraphs: list[Paragraph] = [
-        (page_number, section, piece)
-        for page_number, section, text in with_sections(
+        paragraph._replace(text=piece)
+        for paragraph in with_sections(
             (page.page_number, paragraph)
             for page in doc.pages
             for paragraph in clean_markdown(page.markdown).split(PARAGRAPH_SEPARATOR)
             if paragraph
         )
-        for piece in split_oversized(text, max_chars)
+        for piece in split_oversized(paragraph.text, max_chars)
     ]
 
     groups: list[list[Paragraph]] = []
     for paragraph in paragraphs:
-        text = paragraph[2]
         if (
             groups
-            and group_length(groups[-1]) + len(PARAGRAPH_SEPARATOR) + len(text)
+            and group_length(groups[-1])
+            + len(PARAGRAPH_SEPARATOR)
+            + len(paragraph.text)
             <= max_chars
-            and not starts_new_section(groups[-1], text)
+            and not starts_new_section(groups[-1], paragraph.text)
         ):
             groups[-1].append(paragraph)
         else:
@@ -61,7 +60,7 @@ def with_sections(paragraphs: Iterable[tuple[int, str]]) -> list[Paragraph]:
                 headings.pop()
             headings.append((level, match.group(2)))
         section = tuple(title for _, title in headings)
-        result.append((page_number, section, paragraph))
+        result.append(Paragraph(page_number, section, paragraph))
     return result
 
 
@@ -109,26 +108,26 @@ def is_heading(text: str) -> bool:
 
 
 def starts_new_section(group: list[Paragraph], text: str) -> bool:
-    only_headings_so_far = all(is_heading(paragraph[2]) for paragraph in group)
+    only_headings_so_far = all(is_heading(paragraph.text) for paragraph in group)
     return TOP_LEVEL_HEADING.match(text) is not None and not only_headings_so_far
 
 
 def pop_trailing_headings(group: list[Paragraph]) -> list[Paragraph]:
     carried: list[Paragraph] = []
-    while group and is_heading(group[-1][2]):
+    while group and is_heading(group[-1].text):
         carried.insert(0, group.pop())
     return carried
 
 
 def common_section(group: list[Paragraph]) -> str:
-    sections = [section for _, section, text in group if not is_heading(text)]
-    sections = sections or [group[-1][1]]
+    sections = [p.section for p in group if not is_heading(p.text)]
+    sections = sections or [group[-1].section]
     shared = takewhile(lambda titles: len(set(titles)) == 1, zip(*sections))
     return SECTION_SEPARATOR.join(titles[0] for titles in shared)
 
 
 def group_length(group: list[Paragraph]) -> int:
-    return len(PARAGRAPH_SEPARATOR.join(paragraph[2] for paragraph in group))
+    return len(PARAGRAPH_SEPARATOR.join(paragraph.text for paragraph in group))
 
 
 def to_chunk(
@@ -139,7 +138,7 @@ def to_chunk(
 ) -> Chunk:
     return Chunk(
         chunk_id=hashlib.sha256(f"{doc.content_hash}:{index}".encode()).hexdigest(),
-        text=PARAGRAPH_SEPARATOR.join(paragraph[2] for paragraph in group),
+        text=PARAGRAPH_SEPARATOR.join(paragraph.text for paragraph in group),
         metadata=ChunkMetadata(
             doc_id=doc.doc_id,
             file_name=doc.file_name,
@@ -148,8 +147,8 @@ def to_chunk(
             fund=info.fund,
             umbrella_fund=info.umbrella_fund,
             section=common_section(group),
-            page_start=group[0][0],
-            page_end=group[-1][0],
+            page_start=group[0].page_number,
+            page_end=group[-1].page_number,
             chunk_index=index,
         ),
     )
