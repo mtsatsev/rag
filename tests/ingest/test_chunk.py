@@ -189,7 +189,7 @@ class TestChunkDocumentSections(unittest.TestCase):
 
         self.assertEqual(section_of(chunks, "Текст на страница 2."), "Разходи")
 
-    def test_chunk_document_when_chunk_packs_several_subsections_then_section_is_the_path_at_its_first_paragraph(
+    def test_chunk_document_when_chunk_packs_several_subsections_then_section_is_their_common_parent_heading(
         self,
     ):
         doc = make_document(
@@ -611,3 +611,137 @@ class TestChunkDocumentText(unittest.TestCase):
         chunks = chunk_document(make_document((1, "Текст без заглавие.")), info)
 
         self.assertEqual(chunks[0].embed_text, chunks[0].text)
+
+
+PROSPECTUS_INFO = DocumentInfo(
+    doc_type="prospectus", fund=None, umbrella_fund="Optimum Fund"
+)
+FUND_START_PREFIXES = (
+    "# Information concerning the sub-fund ",
+    "Annex for Optimum Fund ",
+)
+
+
+def detect_test_fund(paragraph: str) -> str | None:
+    for prefix in FUND_START_PREFIXES:
+        if paragraph.startswith(prefix):
+            return paragraph.removeprefix(prefix)
+    return None
+
+
+def fund_of(chunks, text: str) -> str | None:
+    return next(chunk.metadata.fund for chunk in chunks if text in chunk.text)
+
+
+class TestChunkDocumentFunds(unittest.TestCase):
+    def test_chunk_document_when_paragraph_starts_a_fund_then_its_chunk_gets_that_fund(
+        self,
+    ):
+        doc = make_document(
+            (1, "# Information concerning the sub-fund Алфа\n\nТекст за Алфа.")
+        )
+
+        chunks = chunk_document(doc, PROSPECTUS_INFO, detect_fund=detect_test_fund)
+
+        self.assertEqual(fund_of(chunks, "Текст за Алфа."), "Алфа")
+
+    def test_chunk_document_when_paragraphs_precede_the_first_fund_start_then_they_keep_the_document_fund(
+        self,
+    ):
+        doc = make_document(
+            (
+                1,
+                "Общ текст за чадъра.\n\n# Information concerning the sub-fund Алфа\n\nТекст за Алфа.",
+            )
+        )
+
+        chunks = chunk_document(doc, PROSPECTUS_INFO, detect_fund=detect_test_fund)
+
+        self.assertIsNone(fund_of(chunks, "Общ текст за чадъра."))
+
+    def test_chunk_document_when_fund_changes_then_a_new_chunk_starts_even_if_the_paragraph_fits(
+        self,
+    ):
+        doc = make_document(
+            (1, "Текст за чадъра.\n\nAnnex for Optimum Fund Бета\n\nТекст за Бета.")
+        )
+
+        chunks = chunk_document(doc, PROSPECTUS_INFO, detect_fund=detect_test_fund)
+
+        self.assertEqual(
+            [chunk.text for chunk in chunks],
+            ["Текст за чадъра.", "Annex for Optimum Fund Бета\n\nТекст за Бета."],
+        )
+
+    def test_chunk_document_when_second_fund_starts_then_following_chunks_switch_to_it(
+        self,
+    ):
+        doc = make_document(
+            (1, "# Information concerning the sub-fund Алфа\n\nТекст за Алфа."),
+            (2, "# Information concerning the sub-fund Бета\n\nТекст за Бета."),
+        )
+
+        chunks = chunk_document(doc, PROSPECTUS_INFO, detect_fund=detect_test_fund)
+
+        self.assertEqual(
+            (fund_of(chunks, "Текст за Алфа."), fund_of(chunks, "Текст за Бета.")),
+            ("Алфа", "Бета"),
+        )
+
+    def test_chunk_document_when_fund_is_detected_then_umbrella_fund_is_kept_from_document_info(
+        self,
+    ):
+        doc = make_document(
+            (1, "Текст за чадъра.\n\nAnnex for Optimum Fund Бета\n\nТекст за Бета.")
+        )
+
+        chunks = chunk_document(doc, PROSPECTUS_INFO, detect_fund=detect_test_fund)
+
+        self.assertEqual(
+            [chunk.metadata.umbrella_fund for chunk in chunks],
+            ["Optimum Fund"] * len(chunks),
+        )
+
+    def test_chunk_document_when_fund_changes_mid_page_then_both_chunks_have_that_page(
+        self,
+    ):
+        doc = make_document(
+            (3, "Текст за Алфа.\n\nAnnex for Optimum Fund Бета\n\nТекст за Бета.")
+        )
+
+        chunks = chunk_document(doc, PROSPECTUS_INFO, detect_fund=detect_test_fund)
+
+        self.assertEqual(
+            [(chunk.metadata.page_start, chunk.metadata.page_end) for chunk in chunks],
+            [(3, 3), (3, 3)],
+        )
+
+    def test_chunk_document_when_heading_ends_the_previous_fund_then_it_is_not_carried_into_the_next_fund(
+        self,
+    ):
+        doc = make_document(
+            (
+                1,
+                "Текст за чадъра.\n\n### Бележка\n\nAnnex for Optimum Fund Бета\n\nТекст за Бета.",
+            )
+        )
+
+        chunks = chunk_document(doc, PROSPECTUS_INFO, detect_fund=detect_test_fund)
+
+        beta_chunk = next(chunk for chunk in chunks if chunk.metadata.fund == "Бета")
+        self.assertTrue(beta_chunk.text.startswith("Annex for Optimum Fund Бета"))
+
+    def test_chunk_document_when_fund_starts_with_a_plain_paragraph_then_previous_fund_sections_are_dropped(
+        self,
+    ):
+        doc = make_document(
+            (
+                1,
+                "# Information concerning the sub-fund Алфа\n\n## Разходи\n\nТекст за Алфа.",
+            ),
+            (2, "Annex for Optimum Fund Бета\n\nТекст за Бета."),
+        )
+
+        chunks = chunk_document(doc, PROSPECTUS_INFO, detect_fund=detect_test_fund)
+
+        self.assertEqual(section_of(chunks, "Текст за Бета."), "")

@@ -1,6 +1,6 @@
 import hashlib
 import re
-from collections.abc import Iterable
+from collections.abc import Callable, Iterable
 from itertools import takewhile
 
 from rag.ingest.clean import clean_markdown
@@ -17,7 +17,10 @@ WORD_SEPARATOR = " "
 
 
 def chunk_document(
-    doc: ParsedDocument, info: DocumentInfo, max_chars: int = 1500
+    doc: ParsedDocument,
+    info: DocumentInfo,
+    max_chars: int = 1500,
+    detect_fund: Callable[[str], str | None] | None = None,
 ) -> list[Chunk]:
     paragraphs: list[Paragraph] = [
         paragraph._replace(text=piece)
