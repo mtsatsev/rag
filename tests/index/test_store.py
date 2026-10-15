@@ -79,7 +79,7 @@ class TestChunkStoreDocuments(StoreTestCase):
     ):
         self.store.replace_document(KID_CHUNKS)
 
-        self.assertEqual(self.store.count(), 2)
+        self.assertEqual(self.store.count, 2)
 
     def test_replace_document_when_same_document_is_added_twice_then_no_duplicates_are_stored(
         self,
@@ -87,7 +87,7 @@ class TestChunkStoreDocuments(StoreTestCase):
         self.store.replace_document(KID_CHUNKS)
         self.store.replace_document(KID_CHUNKS)
 
-        self.assertEqual(self.store.count(), 2)
+        self.assertEqual(self.store.count, 2)
 
     def test_replace_document_when_new_version_is_added_then_only_the_new_chunks_remain(
         self,
