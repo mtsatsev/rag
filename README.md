@@ -282,6 +282,8 @@ What it shows:
 
 So the system uses dense retrieval with the fund filter. The question set is small and the labels were generated with an LLM (and checked against the chunks), so the numbers show which retriever is better rather than how good it is exactly (as we can see a hit@1 of 64% is not exactly _"amazing"_).
 
+**Look at the `src/notebooks/` folder for the outputs, they should be visible without running
+
 ### Answers
 The answers were not evaluated automatically. I checked them manually on the example questions from the assignment, 3 about ОББ ЕкспертИйз Дефанзивен Консервативен Отговорно Инвестиращ and 2 about the rights of investors. For each one I checked that the answer is correct, that the cited sources are the right document and page, and that the fund is the right one.
 
